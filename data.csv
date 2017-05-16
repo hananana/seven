@@ -1,0 +1,11 @@
+gameId , name      , civilization , total , rank
+0      , murakami  , Ephesos      , 70    , 1
+0      , hanazawa  , Giza         , 62    , 2
+0      , fujita    , Roma         , 59    , 3
+0      , nomura    , Alexandria   , 50    , 4
+1      , hanazawa  , None         , 56    , 3
+1      , nomura    , None         , 72    , 1
+1      , yamazaki  , None         , 65    , 2
+2      , hanazawa  , None         , 76    , 1
+2      , murakami  , None         , 70    , 2
+2      , yamaguchi , None         , 68    , 3
