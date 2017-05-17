@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 type SevenData struct {
@@ -35,6 +36,13 @@ func main() {
 			return d.Name
 		}).ToSlice(&distinctedByName)
 
+		longestName := From(distinctedByName).SelectT(func(d SevenData) string {
+			return d.Name
+		}).OrderByDescendingT(func(s string) int {
+			return utf8.RuneCountInString(s)
+		}).First().(string)
+		longestNameCount := utf8.RuneCountInString(longestName)
+
 		fmt.Println("----- プレイヤーの戦績 -----")
 		for _, v := range distinctedByName {
 			query := From(data).WhereT(func(d SevenData) bool {
@@ -50,13 +58,22 @@ func main() {
 			}).Average()
 			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
 
-			fmt.Println(v.Name + " " + asStr + " " + arStr)
+			diff := longestNameCount - utf8.RuneCountInString(v.Name)
+			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
 		}
 
 		distinctedByCivil := make([]SevenData, 0)
 		From(data).DistinctByT(func(d SevenData) string {
 			return d.Civilization
 		}).ToSlice(&distinctedByCivil)
+
+		longestCivilName := From(distinctedByCivil).SelectT(func(d SevenData) string {
+			return d.Civilization
+		}).OrderByDescendingT(func(s string) int {
+			return utf8.RuneCountInString(s)
+		}).First().(string)
+
+		longestCivilNameCount := utf8.RuneCountInString(longestCivilName)
 
 		fmt.Println("----- 文明の戦績 -----")
 		for _, v := range distinctedByCivil {
@@ -74,12 +91,22 @@ func main() {
 			}).Average()
 
 			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
-			fmt.Println(v.Civilization + " " + asStr + " " + arStr)
+
+			diff := longestCivilNameCount - utf8.RuneCountInString(v.Civilization)
+			fmt.Println(v.Civilization + brank(diff) + ", " + asStr + ", " + arStr)
 		}
 
 		return nil
 	}
 	app.Run(os.Args)
+}
+
+func brank(c int) string {
+	ret := ""
+	for i := 0; i < c; i++ {
+		ret += " "
+	}
+	return ret
 }
 
 func readLine(path string) ([][]string, error) {
