@@ -35,6 +35,7 @@ func main() {
 			return d.Name
 		}).ToSlice(&distinctedByName)
 
+		fmt.Println("----- プレイヤーの戦績 -----")
 		for _, v := range distinctedByName {
 			query := From(data).WhereT(func(d SevenData) bool {
 				return d.Name == v.Name
@@ -43,11 +44,37 @@ func main() {
 				return d.Rank
 			}).Average()
 			arStr := strconv.FormatFloat(averageRank, 'f', 1, 64)
+
 			averageScore := query.SelectT(func(d SevenData) float64 {
 				return d.TotalScore
 			}).Average()
 			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
+
 			fmt.Println(v.Name + " " + asStr + " " + arStr)
+		}
+
+		distinctedByCivil := make([]SevenData, 0)
+		From(data).DistinctByT(func(d SevenData) string {
+			return d.Civilization
+		}).ToSlice(&distinctedByCivil)
+
+		fmt.Println("----- 文明の戦績 -----")
+		for _, v := range distinctedByCivil {
+			query := From(data).WhereT(func(d SevenData) bool {
+				return d.Civilization == v.Civilization
+			})
+
+			averageRank := query.SelectT(func(d SevenData) float64 {
+				return d.Rank
+			}).Average()
+			arStr := strconv.FormatFloat(averageRank, 'f', 1, 64)
+
+			averageScore := query.SelectT(func(d SevenData) float64 {
+				return d.TotalScore
+			}).Average()
+
+			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
+			fmt.Println(v.Civilization + " " + asStr + " " + arStr)
 		}
 
 		return nil
