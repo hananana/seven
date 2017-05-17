@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
+	. "gopkg.in/ahmetb/go-linq.v3"
 	"gopkg.in/urfave/cli.v2"
 	"os"
 	"strconv"
@@ -29,24 +30,29 @@ func main() {
 			return err
 		}
 
-		names, err := distinctName(data)
-		if err != nil {
-			return err
-		}
+		distinctedByName := make([]SevenData, 0)
+		From(data).DistinctByT(func(d SevenData) string {
+			return d.Name
+		}).ToSlice(&distinctedByName)
 
-		fmt.Println(data)
+		for _, v := range distinctedByName {
+			query := From(data).WhereT(func(d SevenData) bool {
+				return d.Name == v.Name
+			})
+			averageRank := query.SelectT(func(d SevenData) float64 {
+				return d.Rank
+			}).Average()
+			arStr := strconv.FormatFloat(averageRank, 'f', 1, 64)
+			averageScore := query.SelectT(func(d SevenData) float64 {
+				return d.TotalScore
+			}).Average()
+			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
+			fmt.Println(v.Name + " " + asStr + " " + arStr)
+		}
 
 		return nil
 	}
 	app.Run(os.Args)
-}
-
-func distinctName(data []SevenData) ([]string, error) {
-	ret := make([]string, 0)
-	for _, v := range data {
-		ret = append(ret, v)
-	}
-	return ret, nil
 }
 
 func readLine(path string) ([][]string, error) {
