@@ -19,6 +19,12 @@ type SevenData struct {
 	GameId       int
 }
 
+type Result struct {
+	Name         string
+	AverageScore float64
+	AverageRank  float64
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Action = func(c *cli.Context) error {
@@ -43,21 +49,32 @@ func main() {
 		}).First().(string)
 		longestNameCount := utf8.RuneCountInString(longestName)
 
-		fmt.Println("----- プレイヤーの戦績 -----")
+		results := make([]Result, 0)
 		for _, v := range distinctedByName {
+			result := Result{}
+			result.Name = v.Name
 			query := From(data).WhereT(func(d SevenData) bool {
 				return d.Name == v.Name
 			})
-			averageRank := query.SelectT(func(d SevenData) float64 {
+
+			result.AverageRank = query.SelectT(func(d SevenData) float64 {
 				return d.Rank
 			}).Average()
-			arStr := strconv.FormatFloat(averageRank, 'f', 1, 64)
 
-			averageScore := query.SelectT(func(d SevenData) float64 {
+			result.AverageScore = query.SelectT(func(d SevenData) float64 {
 				return d.TotalScore
 			}).Average()
-			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
+			results = append(results, result)
+		}
 
+		From(results).OrderByT(func(r Result) float64 {
+			return r.AverageRank
+		}).ToSlice(&results)
+
+		fmt.Println("----- プレイヤーの戦績 -----")
+		for _, v := range results {
+			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
+			asStr := strconv.FormatFloat(v.AverageScore, 'f', 2, 64)
 			diff := longestNameCount - utf8.RuneCountInString(v.Name)
 			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
 		}
@@ -84,13 +101,13 @@ func main() {
 			averageRank := query.SelectT(func(d SevenData) float64 {
 				return d.Rank
 			}).Average()
-			arStr := strconv.FormatFloat(averageRank, 'f', 1, 64)
+			arStr := strconv.FormatFloat(averageRank, 'f', 2, 64)
 
 			averageScore := query.SelectT(func(d SevenData) float64 {
 				return d.TotalScore
 			}).Average()
 
-			asStr := strconv.FormatFloat(averageScore, 'f', 1, 64)
+			asStr := strconv.FormatFloat(averageScore, 'f', 2, 64)
 
 			diff := longestCivilNameCount - utf8.RuneCountInString(v.Civilization)
 			fmt.Println(v.Civilization + brank(diff) + ", " + asStr + ", " + arStr)
