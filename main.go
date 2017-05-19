@@ -92,25 +92,34 @@ func main() {
 
 		longestCivilNameCount := utf8.RuneCountInString(longestCivilName)
 
-		fmt.Println("----- 文明の戦績 -----")
+		civilResults := make([]Result, 0)
 		for _, v := range distinctedByCivil {
+			civilResult := Result{}
+			civilResult.Name = v.Civilization
 			query := From(data).WhereT(func(d SevenData) bool {
 				return d.Civilization == v.Civilization
 			})
 
-			averageRank := query.SelectT(func(d SevenData) float64 {
+			civilResult.AverageRank = query.SelectT(func(d SevenData) float64 {
 				return d.Rank
 			}).Average()
-			arStr := strconv.FormatFloat(averageRank, 'f', 2, 64)
 
-			averageScore := query.SelectT(func(d SevenData) float64 {
+			civilResult.AverageScore = query.SelectT(func(d SevenData) float64 {
 				return d.TotalScore
 			}).Average()
+			civilResults = append(civilResults, civilResult)
+		}
 
-			asStr := strconv.FormatFloat(averageScore, 'f', 2, 64)
+		From(civilResults).OrderByT(func(r Result) float64 {
+			return r.AverageRank
+		}).ToSlice(&civilResults)
 
-			diff := longestCivilNameCount - utf8.RuneCountInString(v.Civilization)
-			fmt.Println(v.Civilization + brank(diff) + ", " + asStr + ", " + arStr)
+		fmt.Println("----- 文明の戦績 -----")
+		for _, v := range civilResults {
+			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
+			asStr := strconv.FormatFloat(v.AverageScore, 'f', 2, 64)
+			diff := longestCivilNameCount - utf8.RuneCountInString(v.Name)
+			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
 		}
 
 		return nil
