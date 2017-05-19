@@ -112,6 +112,8 @@ func main() {
 
 		From(civilResults).OrderByT(func(r Result) float64 {
 			return r.AverageRank
+		}).WhereT(func(r Result) bool {
+			return r.Name != "None"
 		}).ToSlice(&civilResults)
 
 		fmt.Println("----- 文明の戦績 -----")
