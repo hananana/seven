@@ -23,6 +23,7 @@ type Result struct {
 	Name         string
 	AverageScore float64
 	AverageRank  float64
+	Times        int
 }
 
 func main() {
@@ -42,23 +43,26 @@ func main() {
 			return d.Name
 		})
 		fmt.Println("----- プレイヤーの戦績 -----")
+		fmt.Println("名前     ,平均スコア,平均順位")
 		for _, v := range results {
 			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
 			asStr := strconv.FormatFloat(v.AverageScore, 'f', 2, 64)
 			diff := longestNameCount - utf8.RuneCountInString(v.Name)
-			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
+			fmt.Println(v.Name + brank(diff) + ",     " + asStr + ",    " + arStr)
 		}
 
 		civilResults, err := resultsByCivilization(data)
 		longestCivilNameCount := longestCount(data, func(d SevenData) string {
 			return d.Civilization
 		})
+		fmt.Println("")
 		fmt.Println("----- 文明の戦績 -----")
+		fmt.Println("名前         ,平均スコア,平均順位")
 		for _, v := range civilResults {
 			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
 			asStr := strconv.FormatFloat(v.AverageScore, 'f', 2, 64)
 			diff := longestCivilNameCount - utf8.RuneCountInString(v.Name)
-			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
+			fmt.Println(v.Name + brank(diff) + ",     " + asStr + ",    " + arStr)
 		}
 
 		return nil
