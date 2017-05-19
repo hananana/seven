@@ -37,40 +37,10 @@ func main() {
 			return err
 		}
 
-		distinctedByName := make([]SevenData, 0)
-		From(data).DistinctByT(func(d SevenData) string {
+		results, err := resultsByName(data)
+		longestNameCount := longestCount(data, func(d SevenData) string {
 			return d.Name
-		}).ToSlice(&distinctedByName)
-
-		longestName := From(distinctedByName).SelectT(func(d SevenData) string {
-			return d.Name
-		}).OrderByDescendingT(func(s string) int {
-			return utf8.RuneCountInString(s)
-		}).First().(string)
-		longestNameCount := utf8.RuneCountInString(longestName)
-
-		results := make([]Result, 0)
-		for _, v := range distinctedByName {
-			result := Result{}
-			result.Name = v.Name
-			query := From(data).WhereT(func(d SevenData) bool {
-				return d.Name == v.Name
-			})
-
-			result.AverageRank = query.SelectT(func(d SevenData) float64 {
-				return d.Rank
-			}).Average()
-
-			result.AverageScore = query.SelectT(func(d SevenData) float64 {
-				return d.TotalScore
-			}).Average()
-			results = append(results, result)
-		}
-
-		From(results).OrderByT(func(r Result) float64 {
-			return r.AverageRank
-		}).ToSlice(&results)
-
+		})
 		fmt.Println("----- プレイヤーの戦績 -----")
 		for _, v := range results {
 			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
@@ -79,43 +49,10 @@ func main() {
 			fmt.Println(v.Name + brank(diff) + ", " + asStr + ", " + arStr)
 		}
 
-		distinctedByCivil := make([]SevenData, 0)
-		From(data).DistinctByT(func(d SevenData) string {
+		civilResults, err := resultsByCivilization(data)
+		longestCivilNameCount := longestCount(data, func(d SevenData) string {
 			return d.Civilization
-		}).ToSlice(&distinctedByCivil)
-
-		longestCivilName := From(distinctedByCivil).SelectT(func(d SevenData) string {
-			return d.Civilization
-		}).OrderByDescendingT(func(s string) int {
-			return utf8.RuneCountInString(s)
-		}).First().(string)
-
-		longestCivilNameCount := utf8.RuneCountInString(longestCivilName)
-
-		civilResults := make([]Result, 0)
-		for _, v := range distinctedByCivil {
-			civilResult := Result{}
-			civilResult.Name = v.Civilization
-			query := From(data).WhereT(func(d SevenData) bool {
-				return d.Civilization == v.Civilization
-			})
-
-			civilResult.AverageRank = query.SelectT(func(d SevenData) float64 {
-				return d.Rank
-			}).Average()
-
-			civilResult.AverageScore = query.SelectT(func(d SevenData) float64 {
-				return d.TotalScore
-			}).Average()
-			civilResults = append(civilResults, civilResult)
-		}
-
-		From(civilResults).OrderByT(func(r Result) float64 {
-			return r.AverageRank
-		}).WhereT(func(r Result) bool {
-			return r.Name != "None"
-		}).ToSlice(&civilResults)
-
+		})
 		fmt.Println("----- 文明の戦績 -----")
 		for _, v := range civilResults {
 			arStr := strconv.FormatFloat(v.AverageRank, 'f', 2, 64)
@@ -159,4 +96,73 @@ func parse(data [][]string) ([]SevenData, error) {
 		}
 	}
 	return ret, nil
+}
+
+func resultsByName(data []SevenData) ([]Result, error) {
+	distinctedByName := make([]SevenData, 0)
+	From(data).DistinctByT(func(d SevenData) string {
+		return d.Name
+	}).ToSlice(&distinctedByName)
+
+	results := make([]Result, 0)
+	for _, v := range distinctedByName {
+		result := Result{}
+		result.Name = v.Name
+		query := From(data).WhereT(func(d SevenData) bool {
+			return d.Name == v.Name
+		})
+
+		result.AverageRank = query.SelectT(func(d SevenData) float64 {
+			return d.Rank
+		}).Average()
+
+		result.AverageScore = query.SelectT(func(d SevenData) float64 {
+			return d.TotalScore
+		}).Average()
+		results = append(results, result)
+	}
+
+	From(results).OrderByT(func(r Result) float64 {
+		return r.AverageRank
+	}).ToSlice(&results)
+	return results, nil
+}
+
+func resultsByCivilization(data []SevenData) ([]Result, error) {
+	distinctedByCivil := make([]SevenData, 0)
+	From(data).DistinctByT(func(d SevenData) string {
+		return d.Civilization
+	}).ToSlice(&distinctedByCivil)
+
+	civilResults := make([]Result, 0)
+	for _, v := range distinctedByCivil {
+		civilResult := Result{}
+		civilResult.Name = v.Civilization
+		query := From(data).WhereT(func(d SevenData) bool {
+			return d.Civilization == v.Civilization
+		})
+
+		civilResult.AverageRank = query.SelectT(func(d SevenData) float64 {
+			return d.Rank
+		}).Average()
+
+		civilResult.AverageScore = query.SelectT(func(d SevenData) float64 {
+			return d.TotalScore
+		}).Average()
+		civilResults = append(civilResults, civilResult)
+	}
+
+	From(civilResults).OrderByT(func(r Result) float64 {
+		return r.AverageRank
+	}).WhereT(func(r Result) bool {
+		return r.Name != "None"
+	}).ToSlice(&civilResults)
+	return civilResults, nil
+}
+
+func longestCount(data []SevenData, selector interface{}) int {
+	longestStr := From(data).SelectT(selector).OrderByDescendingT(func(s string) int {
+		return utf8.RuneCountInString(s)
+	}).First().(string)
+	return utf8.RuneCountInString(longestStr)
 }
